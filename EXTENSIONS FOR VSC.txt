@@ -1,0 +1,24 @@
+﻿c# - Microsoft
+Checkstyle for java - ShengChen
+Deugger For Java - Microsoft
+Discord Presence - Noel
+Eclipse Keymap - Alphabot Security
+File-icons - file-icons
+HTML CSS Support - ecmel
+HTML Snippets - Mohamed Abusaid
+IntelliJ  IDEA Keybinding - Keisuke kato
+Java Dependency Viewer - Microsoft
+Java Extension Pack - Microsfot
+Java Test Runner - Microsoft
+Language Setup For Java (TM) By Red Hat  - Red Hat
+Maven For Java - Microsoft
+Python - Microsoft
+RPM Spec - Laurent Tr`eguier
+Ruby - Peng Lv
+SonarLint - SonarSource
+Tomcat Fot Java - Wei Shen
+Visual Studio IntelliCode - Microsoft
+VSCode Ruby - Stafford Brunk
+XML - Red Hat
+XML Tools - Josh Johnson
+vscode-pdf - tomoki1207 
