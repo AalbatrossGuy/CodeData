@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 
 //int main(){
 //    int n;
@@ -24,5 +25,10 @@ int ReturnFunc(int x){
 int main(){
     int man = ReturnFunc(21);
     printf("%d", man);
+    char mystr[] = "The quick brown fox";
+    char search_ch = 'q';
+    char *GOT_CHAR;
+    GOT_CHAR = strchr(mystr, search_ch);
+    printf("THe address of q is %s", GOT_CHAR);
     return 0;
 }
