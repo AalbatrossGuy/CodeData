@@ -11,4 +11,6 @@ def func(n:tuple):
     else:
         return False
 
-print(tuple(filter(func, enumerate(mylist))))
+#print(tuple(filter(func, enumerate(mylist))))
+
+
