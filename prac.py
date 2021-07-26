@@ -13,4 +13,22 @@ def func(n:tuple):
 
 #print(tuple(filter(func, enumerate(mylist))))
 
+mystring = """Im happy Today
+Im glad today
 
+Hello
+Goodmorning
+
+Hi
+Goodnight
+
+Good
+
+What's up
+Hello"""
+
+
+lst = mystring.replace('\n', '')
+
+x = "\n".join(["".join(lst[i:i+5]) for i in range(0,len(lst),5)])
+print(x)
