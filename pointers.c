@@ -23,6 +23,9 @@ int ReturnFunc(int x){
 }
 // Pointers occupy 8 bytes and the addresses are in the form of hexadecimal digits;
 int main(){
+    int values[10] = {10, 20, 30, 40};
+    int *pVals = &values[2]; // initialising a pointer with only the list name will set the pointer to point to the first element in the list.
+    printf("The value of pVals pointer is %d\n", *pVals);
     void *pnew; // creates a pointer of type void. Can take any data type.
     char c = 'a';
     pnew = &c;
@@ -41,16 +44,16 @@ int main(){
     result = *pmyman * 10; // using asterisk in a already-declared pointer variable dereferences it and gives back the value instead of it's address;
     int *presult = &result;
     printf("The value of result is %d and it's address is %p\n", result, presult);
-    int man = ReturnFunc(21);
-    printf("%d", man);
-    char mystr[] = "The quick brown fox";
-    char search_ch = 'q';
-    char *GOT_CHAR = NULL;
-    int *pnumber = &man;
-    GOT_CHAR = strchr(mystr, search_ch);
+//    int man = ReturnFunc(21);
+//    printf("%d", man);
+//    char mystr[] = "The quick brown fox";
+//    char search_ch = 'q';
+//    char *GOT_CHAR = NULL;
+//    int *pnumber = &man;
+//    GOT_CHAR = strchr(mystr, search_ch);
     //printf("THe address of q is %s", GOT_CHAR);
-    printf("The value of Multiply function is: %d\n", Multiply(20, 10));
-    printf("The address of int man is : %p", pnumber);
+//    printf("The value of Multiply function is: %d\n", Multiply(20, 10));
+//    printf("The address of int man is : %p", pnumber);
     return 0;
 }
 
