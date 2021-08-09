@@ -1,6 +1,5 @@
-import requests
+import robloxpy
 
-url = "http://apimeme.com/meme?meme=10-Guy&top=Top+text&bottom=Bottom+text"
-
-data = requests.request("GET", url=url).json()
-print(data)
+userID = robloxpy.User.External.GetID("AalbatrossGuy")
+url = robloxpy.User.Friends.External.GetAll(userID)
+print(url)
