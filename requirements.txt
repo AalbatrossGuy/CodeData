@@ -72,7 +72,7 @@ threadpoolctl==2.1.0
 typing-extensions==3.7.4.3
 update-checker==0.18.0
 uritemplate==3.0.1
-urllib3==1.25.10
+urllib3==1.26.5
 websocket-client==0.57.0
 Wikipedia-API==0.5.4
 yarl==1.6.3
