@@ -86,8 +86,16 @@ class prac{
                 double c_cbrt = Math.cbrt(27);
                 System.out.println("Cube Root Number: "+c_cbrt);
                 break;
+
+            case 11:
+                System.out.println("Enter 3 numbers");
+                int a_num = sc.nextInt();
+                int b_num = sc.nextInt();
+                int c_num = scn.nextInt();
+
             default:
                 System.out.println("Choice Doesn't Exists!!");
+
 
     
         }

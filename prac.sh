@@ -30,4 +30,29 @@
 
 #echo "done"
 
+#NUM = 1
 
+#while [[ "$NUM" -le 20 ]]; do
+    #echo "$NUM"
+    #((NUM++))
+#done
+
+#for i in {0..30}; do 
+    #echo "$i"
+#done
+
+#for ((i=1; i < 10; ++i)); do 
+    #if ((i%2==0)); then
+        #echo "$i"
+    #else 
+        #echo "--"
+    #fi 
+#done
+
+#echo "done"
+
+ARR=("$@") # unlimited space array
+
+echo ${ARR[1]} # echo 'x' content of the array
+
+echo $# # echo the length of the array
