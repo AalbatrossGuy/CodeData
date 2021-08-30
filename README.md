@@ -1,2 +1,2 @@
 # My-projects
-So this repo has been made to store a few of my favourite files and also some notes.
+My Projects and all my files where i generally practice coding ;)
