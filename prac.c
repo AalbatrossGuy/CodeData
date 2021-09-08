@@ -6,6 +6,7 @@ int test(void);
 int structest(void);
 int small(void);
 int Arr_Length(void);
+int strucpoint(void);
 
 int main(void){
     /*printf("Hello, World");*/
@@ -13,7 +14,8 @@ int main(void){
     /*test();*/
 /*    structest();*/
     /*small();*/
-    Arr_Length();
+    /*Arr_Length();*/
+    strucpoint();
     return 0;
 }
 
@@ -52,4 +54,10 @@ int Arr_Length(void){
     char arr[] = {"This is a lubby dubby string Hi There I am Kishaloy Roy"};
     int arrlen = (sizeof(arr)/sizeof(arr[0])) - 1;
     printf("The length of the array is: %d\n", arrlen);
+}
+
+int strucpoint(void){
+    struct date *pDate = NULL;
+    pDate = &Today;
+    printf("%d\n", pDate->month); // calling (*pDate).month in a simpler way.
 }
