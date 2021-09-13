@@ -1,21 +1,20 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
+// prototype defined
 int test(void);
 int structest(void);
 int small(void);
 int Arr_Length(void);
 int strucpoint(void);
+int anotherfunc(void);
+
+
 
 int main(void){
-    /*printf("Hello, World");*/
-    /*printf("\n");*/
-    /*test();*/
-/*    structest();*/
-    /*small();*/
-    /*Arr_Length();*/
-    strucpoint();
+    //printf("Hello world");
     return 0;
 }
 
@@ -61,3 +60,13 @@ int strucpoint(void){
     pDate = &Today;
     printf("%d\n", pDate->month); // calling (*pDate).month in a simpler way.
 }
+
+int anotherfunc(void){
+    char name1[20] = {"This is compare"};
+    char name2[20] = {"This is compare#3"};
+    int res = strcmp(name1, name2);
+    printf("%d\n", res);
+
+}
+
+
