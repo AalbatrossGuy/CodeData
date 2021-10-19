@@ -12,9 +12,8 @@ int strucpoint(void);
 int anotherfunc(void);
 
 
-
-int main(void){
-    //printf("Hello world");
+int main(void){ 
+    //printf("Hello World");
     return 0;
 }
 
@@ -68,5 +67,4 @@ int anotherfunc(void){
     printf("%d\n", res);
 
 }
-
 
