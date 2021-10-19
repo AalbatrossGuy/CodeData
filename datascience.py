@@ -30,3 +30,5 @@ plt.xlabel("X Side")
 plt.ylabel("Y Side")
 plt.title("Ha Ha Ha")
 plt.show()
+
+
