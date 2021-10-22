@@ -1,10 +1,10 @@
-from flask import Flask
+from flask import Flask         
 from threading import Thread
 
 app = Flask('')
 
 @app.route('/')
-def main():
+def main():         
     return "established."
 
 def run():
@@ -12,4 +12,9 @@ def run():
 
 def keep_alive():
     server = Thread(target=run)
-    server.start()
+    server.start()                      
+
+def myfunc():
+    print('hello world')
+
+ 

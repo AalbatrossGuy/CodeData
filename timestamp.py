@@ -6,4 +6,5 @@ from datetime import datetime
 
 date = datetime(2006, 12, 13, 6)
 timestamp = datetime.timestamp(date)
-print(timestamp)
+# print(timestamp)
+
