@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "headers/test.h"
 // prototype defined
 int test(void);
 int structest(void);
@@ -10,11 +10,13 @@ int small(void);
 int Arr_Length(void);
 int strucpoint(void);
 int anotherfunc(void);
-
+int pracfunc_a(void);
 
 int main(void){ 
-    //printf("Hello World");
-    return 0;
+  int c = add(4, 6);
+  printf("The result is: %d\n", c);
+  //printf("Hello World");
+  return 0;
 }
 
 int test(void){
@@ -68,3 +70,9 @@ int anotherfunc(void){
 
 }
 
+
+
+int pracfunc_a(void){
+
+  return 0;
+}
