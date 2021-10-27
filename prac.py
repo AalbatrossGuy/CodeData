@@ -31,5 +31,12 @@
 
 a = 24.02920420489002
 
-if a  == '2425u2<F8>5902':
+print('👍')
 
+def myfunc(*args):
+    return sum(args)
+
+print(myfunc(2, 4, 8, 10))
+
+x = map(int, list(input("Enter stuff: ").split(',')))
+print(sum(x))
