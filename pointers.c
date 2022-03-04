@@ -44,16 +44,16 @@ int main(){
     result = *pmyman * 10; // using asterisk in a already-declared pointer variable dereferences it and gives back the value instead of it's address;
     int *presult = &result;
     printf("The value of result is %d and it's address is %p\n", result, presult);
-//    int man = ReturnFunc(21);
-//    printf("%d", man);
-//    char mystr[] = "The quick brown fox";
-//    char search_ch = 'q';
-//    char *GOT_CHAR = NULL;
-//    int *pnumber = &man;
-//    GOT_CHAR = strchr(mystr, search_ch);
+    //    int man = ReturnFunc(21);
+    //    printf("%d", man);
+    //    char mystr[] = "The quick brown fox";
+    //    char search_ch = 'q';
+    //    char *GOT_CHAR = NULL;
+    //    int *pnumber = &man;
+    //    GOT_CHAR = strchr(mystr, search_ch);
     //printf("THe address of q is %s", GOT_CHAR);
-//    printf("The value of Multiply function is: %d\n", Multiply(20, 10));
-//    printf("The address of int man is : %p", pnumber);
+    //    printf("The value of Multiply function is: %d\n", Multiply(20, 10));
+    //    printf("The address of int man is : %p", pnumber);
     return 0;
 }
 
@@ -61,5 +61,4 @@ int Multiply(int x, int y){
     int result = x*y;
     return result;
 }
-
 
