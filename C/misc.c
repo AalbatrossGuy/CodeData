@@ -12,7 +12,7 @@ int strucpoint(void);
 int anotherfunc(void);
 int pracfunc_a(void);
 
-int main(void){ 
+int main(void){
   int c = add(4, 6);
   printf("The result is: %d\n", c);
   //printf("Hello World");
@@ -21,7 +21,7 @@ int main(void){
 
 int test(void){
     char *mstring = NULL;
-    mstring = (char *) calloc(11, sizeof(char)); 
+    mstring = (char *) calloc(11, sizeof(char));
     fgets(mstring, 10, stdin);
     printf("%s\n", mstring);
     free(mstring);
@@ -68,11 +68,4 @@ int anotherfunc(void){
     int res = strcmp(name1, name2);
     printf("%d\n", res);
 
-}
-
-
-
-int pracfunc_a(void){
-
-  return 0;
 }
