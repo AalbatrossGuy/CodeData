@@ -6,7 +6,7 @@ int main(){
     int count = 10;
     long sum = 0;
     float average = 0.0f;
-
+    
     printf("Enter 10 grades:\n");
     
     for(int i=0; i<count; ++i){
@@ -14,7 +14,7 @@ int main(){
         scanf("%d", &grades[i]);
         sum+=grades[i];
     }
-
+    
     average = (float)sum/count;
     printf("%.2f", average);
 }

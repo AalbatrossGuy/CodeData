@@ -25,6 +25,7 @@
 # x = np.linspace(0, 5, 10)
 # y = x**2
 
+<<<<<<< HEAD
 # plt.plot(x, y)
 # plt.xlabel("X Side")
 # plt.ylabel("Y Side")
@@ -36,3 +37,12 @@ Name = "k2"
 
 if __name__ == '__main__':
     print(name, Name)
+=======
+plt.plot(x, y)
+plt.xlabel("X Side")
+plt.ylabel("Y Side")
+plt.title("Ha Ha Ha")
+plt.show()
+
+
+>>>>>>> c32e547ff0b5852d8d8111c574b114e9a1cf47bc
