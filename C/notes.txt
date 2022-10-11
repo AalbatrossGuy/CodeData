@@ -1,0 +1,13 @@
+a. if enum direction {up, down, left=10, right}, then up will be 0, down will be 1 but left will be 10 (because we explicitly defined it to be 10) and right will be 11 as it appears right after left.
+
+b. enums are treated as integer constants.
+
+c. If set, char var = 65 or any other int, it is gonna look up to the ASCII table and assign its corresponding character to it.
+
+d. unsigned <data-type> can only store positive values. Its format specifier is %u
+
+e. Type casting can be done by (<type-to-cast)<variable> while printing the value or even while assigning it to a new value.
+
+f. for finding the length of an array, do sizeof(array)/sizeof(datatype).
+
+g. 
