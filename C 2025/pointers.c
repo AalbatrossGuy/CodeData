@@ -29,6 +29,44 @@ int main() {
     printf("The value of ch is: %c and the address of the pointer is: 0x%p\n", *pCh, &pCh);
     int * p, q; // p is a pointer (uninitialized) and q is an int data type.
     // To get the size of a pointer, use the sizeof() function same as other variables.
+    int testNum = 10;
+    int * pTestNum = &testNum;
+    *pTestNum += 20; // If you call the value, the pointer is pointing to, normal arithmetic calculations can be done. When using *pTestNum += 20, it's getting the value of the address of testNum and then adding 20 to it. Since testNum also points to that same address, the value of testNum changes too!
+    ++*pTestNum; // ++pTestNum is the same as pTestNum += 1. Increments the value by 1
+    printf("The value of ptestNum is: %i and the value of testNum is: %i\n", *pTestNum, testNum);
+    int aNum = 0;
+    int * pANum = &aNum;
+    printf("Enter a number: ");
+    scanf("%d", pANum); // scanf() takes a pointer as its second argument. Since variables are not pointers, we used & to store the inputted value in the address of that variable. However, since pointer already points to an address, no need to use &. Simply using the pointer variable works.
+    printf("The value of aNum is: %i\n", aNum);
+    // Always check for NULL before using a pointer!!!
+    // To point to a constant value for a pointer variable, use this: const <data-type> *<variable> = &<variable>;
+    int constpointer = 69;
+    const int * pConstPointer = &constpointer; // this means that the value of the address of constpointer, i.e., 69, is constant and cannot be changed. The pointer itself is not constant. The address of a variable that it's storing CAN be changed.
+    printf("pConstPointer is pointing to: %i\n", *pConstPointer);
+    // Hence, doing something like
+    // *pConstPointer = 79; // will give an error
+    // In order to change the value, change it directly from the variable and not the pointer.
+    constpointer = 79; // works!
+    pConstPointer = &testNum; // works because the pointer itself is not constant.
+    // NOTE: Since the pointer was declared with a const keyword, the value of the address that it points to CANNOT be changed. However, the address of a variable that it points to CAN be changed!!!!!!
 
+    // In order to make the address of the variable that the pointer is pointing to unchangeable but value changeable, use this syntax: <data-type> * const <pointer-variable> = &<variable>;
+    int * const trulyConstantPointer = &constpointer; // The pointer itself cannot be changed now. The address stored in it cannot be changed, but the value it points to can be changed!
+    printf("trulyConstantPointer is pointing to: %i\n", *trulyConstantPointer);
+    *trulyConstantPointer = 89; // works!
+    printf("The value of trulyConstantPointer after changing it's value is: %i\n", *trulyConstantPointer);
+    // In const int *pVariable, the value gets fixed. The address can be changed. Even if the address is changed, the value of that new address still cannot be changed. It has to be changed directly from the variable itself.
+    // In int * const pVariable, the address gets fixed. The value can be changed.
+
+    // To make both the value and address constant, use this syntax: const <data-type> * const <pointer-variable> = &<variable>;
+    int fullConst = 100;
+    const int * const fullConstPointer = &fullConst;
+    printf("fullConstPointer is pointing to: %i\n", *fullConstPointer);
     return 0;
 }
+
+/* const <data-type> * ... =====> Value cannot be changed, address can be changed.
+ * <data-type> * const ... =====> Address cannot be changed, value can be changed.
+ * const <data-type> * const ... =====> Neither address nor value can be changed.
+*/
