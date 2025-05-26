@@ -125,11 +125,15 @@ void pointer_arithmetic() {
     // }
     // printf("The sum of the elements of the array is: %i\n", sum);
     // Since arrays and pointers are nearly the same, either of these is valid for function params: int array[] or int *array.
-    float flt = 1.23456789;
-    int* abcd = &flt;
-    printf("The value of the address of flt is: %i\n", abcd);
     char string[] = "Hello";
     size_t length_string = strnlen(string, sizeof(string));
     size_t length_string2 = strlen(string);
     printf("The length of the string is: %llu\n", length_string2);
+    char mystring[] = "HELLO";
+    printf("\n");
+    printf("%s", mystring);
+    char * pMyString = mystring;
+    printf("%c", pMyString[0]);
+    ++pMyString; // To access the next character, use this.
+    printf("%c", pMyString[0]);
 }
