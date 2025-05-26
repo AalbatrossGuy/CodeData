@@ -6,18 +6,17 @@
 #include <stddef.h>
 #include <string.h>
 
-void array_pointer();
+void array_pointer(); //prototype declaration. Some nigga said, also called forward declaration in C++
 void pointer_arithmetic();
 
 // pointers gonna be the end of me 🥀
 int main() {
-    // Pointers occupy 8 bytes of memory space.
     // int number = 99 has an address of 1008.
     // Always initialize a pointer. NEVER declare it uninitialized.
     // In order to declare a pointer that doesn't point to anything, do this:
     int *pExamplePointer = NULL;
     // int *pnumber = &number, assigns the address of number, i.e., 1008 to pnumber variable. The asterisk (*) makes it a pointer, which basically means that pnumber is pointing to the address of number
-    // When the pointer points to an address, it also points to the value of that address. In this case, the value of address 1008 is 99.
+    // The pointer is a variable that points to an address in memory.
     // Syntax for defining a pointer -> <data type> *<variable name>. Best practice tells you to start a pointer with "p" followed by the name of the variable for which you're making the pointer.
     // Best practice tells you to give a space between asterisk (*) and the pointer name when declaring it and removing the space when dereferencing it.
     int myNum = 100;
@@ -118,12 +117,19 @@ void pointer_arithmetic() {
     printf("The 41st element is: %i\n", *pArr);
     printf("The array is: %d\n", arr);
     // A neat way of looping through an array using pointers majorly. It generally is used in a function, but for example's sake it's used here:
-    int array[]; const int n;
-    int sum = 0, * ptr;
-    int * const arrayEnd = array + n; // Address of the last element of the array.
-    for (ptr = array; ptr < arrayEnd; ++ptr) { // Looping till ptr hits the address of the last element in the array.
-        sum += *ptr; // Just add the value to a sum variable to get the sum.
-    }
-    printf("The sum of the elements of the array is: %i\n", sum);
+    // int array[30]; const int n;
+    // int sum = 0, * ptr;
+    // int * const arrayEnd = array + n; // Address of the last element of the array.
+    // for (ptr = array; ptr < arrayEnd; ++ptr) { // Looping till ptr hits the address of the last element in the array.
+    //     sum += *ptr; // Just add the value to a sum variable to get the sum.
+    // }
+    // printf("The sum of the elements of the array is: %i\n", sum);
     // Since arrays and pointers are nearly the same, either of these is valid for function params: int array[] or int *array.
+    float flt = 1.23456789;
+    int* abcd = &flt;
+    printf("The value of the address of flt is: %i\n", abcd);
+    char string[] = "Hello";
+    size_t length_string = strnlen(string, sizeof(string));
+    size_t length_string2 = strlen(string);
+    printf("The length of the string is: %llu\n", length_string2);
 }
