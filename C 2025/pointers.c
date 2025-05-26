@@ -6,6 +6,9 @@
 #include <stddef.h>
 #include <string.h>
 
+void array_pointer();
+void pointer_arithmetic();
+
 // pointers gonna be the end of me 🥀
 int main() {
     // Pointers occupy 8 bytes of memory space.
@@ -37,7 +40,7 @@ int main() {
     int aNum = 0;
     int * pANum = &aNum;
     printf("Enter a number: ");
-    scanf("%d", pANum); // scanf() takes a pointer as its second argument. Since variables are not pointers, we used & to store the inputted value in the address of that variable. However, since pointer already points to an address, no need to use &. Simply using the pointer variable works.
+    // scanf("%d", pANum); // scanf() takes a pointer as its second argument. Since variables are not pointers, we used & to store the inputted value in the address of that variable. However, since pointer already points to an address, no need to use &. Simply using the pointer variable works.
     printf("The value of aNum is: %i\n", aNum);
     // Always check for NULL before using a pointer!!!
     // To point to a constant value for a pointer variable, use this: const <data-type> *<variable> = &<variable>;
@@ -63,6 +66,16 @@ int main() {
     int fullConst = 100;
     const int * const fullConstPointer = &fullConst;
     printf("fullConstPointer is pointing to: %i\n", *fullConstPointer);
+    // A pointer of type void * can contain the address of a variable of any data type.
+    // void * is used as a parameter type or return value type with functions that deal with data in a type-independent way.
+    void * pVoid = &fullConst;
+    printf("The value of pVoid is: %i\n", *(int *)pVoid);
+    char pc = 'B';
+    pVoid = &pc;
+    printf("The value of pVoid is: %c\n", *(char *)pVoid); // Syntax for dereferencing a pointer of type void is *(data-type *)pointer
+    printf("=======================================================");
+    array_pointer();
+    pointer_arithmetic();
     return 0;
 }
 
@@ -70,3 +83,47 @@ int main() {
  * <data-type> * const ... =====> Address cannot be changed, value can be changed.
  * const <data-type> * const ... =====> Neither address nor value can be changed.
 */
+
+/* When wanting to use a pointer as a parameter for a function in which you don't want to change the original value, use a const <data-type> * <pointer-name>.
+ * This means that the value of the address that it's pointing to cannot be changed. However, the address it's pointing to can be changed.
+ */
+
+void array_pointer() {
+    // The most common use case for pointers is in array operations.
+    // The main reasons for using pointers to arrays are less memory and faster execution times. Pointers are more commonly used in character arrays.
+    // When using pointer for arrays, it doesn't point to the array itself. It points to the type of element that is CONTAINED in that array.
+    printf("\n");
+    int arr[5] = {1, 2, 3, 4, 5};
+    int * pArr = arr; // pArr points to the first element of the array. Since all arrays are pointers, you don't have to use & operator.
+    printf("The value of pArr is: %i\n", *pArr); // The value of the address of pArr is the value of the first element of the array.
+    pArr = &arr[2]; // When assigning the value of the non-first element of the array, usual syntax follows. Generally, other elements of the array is accessed by pointer arithmetic for pointer variables.
+    printf("The value of pArr is: %i\n", *pArr); // The value of the address of pArr is the value of the third element of the array.
+}
+
+void pointer_arithmetic() {
+    printf("=======================================================");
+    printf("\n");
+
+
+    // Pointer arithmetic is especially required when we want to sequence through the elements of an array.
+    int arr[50] = {[3] = 39, [40] = 40, [41] = 59};
+    int * pArr = arr; // Points to the first element. In order to get ith element, do * (pArr + i).
+    * (pArr + 49) = 169;
+    printf("The 2nd element is: %i\n", *(pArr + 2));
+    printf("The 3rd element is: %i\n", *(pArr + 3));
+    printf("The 49th element is: %i\n", arr[49]);
+    pArr = &arr[40]; // This can be done too!
+    printf("The 40th element is: %i\n", *pArr);
+    ++pArr; // This can be done too!
+    printf("The 41st element is: %i\n", *pArr);
+    printf("The array is: %d\n", arr);
+    // A neat way of looping through an array using pointers majorly. It generally is used in a function, but for example's sake it's used here:
+    int array[]; const int n;
+    int sum = 0, * ptr;
+    int * const arrayEnd = array + n; // Address of the last element of the array.
+    for (ptr = array; ptr < arrayEnd; ++ptr) { // Looping till ptr hits the address of the last element in the array.
+        sum += *ptr; // Just add the value to a sum variable to get the sum.
+    }
+    printf("The sum of the elements of the array is: %i\n", sum);
+    // Since arrays and pointers are nearly the same, either of these is valid for function params: int array[] or int *array.
+}
