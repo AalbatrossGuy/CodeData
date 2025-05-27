@@ -8,7 +8,7 @@
 #include <stdlib.h> // if #include "header.h" is used, it means, it's an user defined header file and tells the preprocessor to look for it in the current directory.
 #include <string.h> // string functions.
 
-void test_func();
+int test_func();
 
 int main() {
     // enum daysOfWeek {Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday};
@@ -102,7 +102,7 @@ int main() {
 // Two strings can be compared by using strcmp function.
 // size_t data type is used to declare variables meant to hold the size of a token.
 
-void test_func() {
+int test_func() {
     char mystr[] = "ABCDEFGHIJ";
     char nonvaluearr[47];
     size_t len = strlen(mystr);
