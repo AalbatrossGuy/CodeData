@@ -22,7 +22,7 @@
  *      big data types, etc.
  * global variables are required
  * arrays or structs need
-
+*/
 int main() {
     printf("%d\n", test_func());
 }
