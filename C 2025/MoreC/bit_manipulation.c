@@ -17,6 +17,8 @@
 // signed (negative) numbers are represented using two's complement notation.
 // The leftmost bit represents the sign bit. 1 = -ve number and 0 = +ve number. The remaining bits represent the value of the number
 // Bit manipulation in C allows the manipulation of individual bits in a variable.
+// Left shifting a number by 'n' bits is equivalent to multiplying that number by 2^n.
+// Right Shifting a number by 'n' bits is equivalent to dividing that number by 2^n.
 int main() {
     return 0;
 }
