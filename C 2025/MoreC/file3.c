@@ -4,11 +4,16 @@
 
 void variadic();
 double average(double v1, double v2, ...);
+void recursionahh();
+int factorial(int n);
 
 int main() {
     variadic();
     double avgResult = average(10.1, 20.3, 35.66, 40.65, 99.31);
-    printf("The result of average() is: %f", avgResult);
+    printf("The result of average() is: %f\n", avgResult);
+    recursionahh();
+    int fac = factorial(5);
+    printf("The factorial is: %i\n", fac);
     return 0;
 }
 
@@ -79,4 +84,31 @@ double average(const double v1, const double v2, ...) {
     }
     va_end(pArg);
     return sum / count;
+}
+
+void recursionahh() {
+    // basically, recursion is a function that calls itself, and it's fucking annoying other than the fact that it's memory AND CPU hungry.
+    // Highly susceptible to infinite looping.
+    // A function that calls itself (recursion) MUST contain a conditional test/base case that terminates the recursion.
+    // When the function is called with a more complex use case, it divides the problem into two conceptual pieces :-
+    /*  - A piece that the function knows what to do
+     *  - A smaller version of the original problem
+     */
+    // For recursion to terminate, the sequence of smaller and smaller problems must converge on the base case.
+    // When the function recognizes the base case, the result is returned to the previous function call. A sequence of returns goes allllll the way up to the original call of the function thus returning the final result.
+    // Visualization (considering function 4 hits the condition):-
+    /* function 1 -> function 2 -> function 3 -> function 4
+     * function 4 then returns the control back to function 3, function 3 returns the control back to function 2, function 2 returns the control back to function 1, i.e, the original function.
+     * function 1, 2, 3, 4 are all the same recursion function.
+     */
+    // Tail recursion is when the recursive call in the function comes at the END of the control flow.
+}
+
+int factorial(int n) {
+    // The most common recursion example.
+    // The factorial of any positive integer 'n' > 0 is n * factorial(n-1)
+    if (n == 0) {
+        return 1;
+    }
+    return n * factorial(n - 1);
 }
