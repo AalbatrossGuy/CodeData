@@ -47,5 +47,4 @@ void Union() {
     car1.value = 69;
     union car *car3 = &car1;
     car3->price = 1.5;
-    
 }
