@@ -1,5 +1,9 @@
+// #[derive(Debug)] is known as attributes. Putting it above a struct defines the attribute of that
+// struct. It essentially gives the rust compiler some extra info.
+// "derive" is called the derive attribute. It specifies which 'trait' to automatically implement
+// for this struct.
+// "Debug" is called the "Debug trait". It sets a group of functions for the struct.
 #[derive(Debug)]
-
 struct Deck {
     // names of struct always starts with capital letter.
     // "cards" is the piece of data struct Deck will contain.
