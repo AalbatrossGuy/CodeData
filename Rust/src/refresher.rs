@@ -23,7 +23,24 @@ fn main() {
     // "Deck { cards: vec![] }" creates an empty vector. The "!" indicates it's a macro
     // "vec![]" and "Vec::new()" are used to define empty vectors
     // ":?" is a formatter. It customizes the way values are formatted. It's a Debug formatter
-    let deck = Deck { cards: vec![] };
-    println!("Deck: {:?}", deck);
+    // ":#?" formats the string by putting array/vector elements in new line for better visibility
+    // since no formatted print method is defined in Deck, the attribute gives the formatter a
+    // pretty print way to display text
+    // Bindings in rust are immutable by default. You've to make them mutable to read/write data.
+    let suits = vec!["Hearts", "spades", "Diamonds"];
+    let values = vec!["Ace", "Two", "Three"];
+    let example_array = [1, 2, 3, 4, 5];
+    let mut cards = Vec::new();
+    for suit in &suits {
+        for value in &values {
+            let card = format!("{value} of {suit}");
+            cards.push(card);
+        }
+    }
+    // If you println!(Deck), it'll give something similar to __repr__ in python's class.
+    // If you do Deck.cards, it'll return the value.
+    let deck = Deck { cards };
+    println!("Deck: {:#?}", deck.cards);
     println!("Hello World");
+    println!("{:?}", example_array);
 }
