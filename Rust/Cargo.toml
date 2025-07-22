@@ -1,0 +1,10 @@
+[package]
+name="refresher"
+version="0.0.1"
+edition="2024"
+
+[[bin]]
+name="refresher"
+path="src/refresher.rs"
+
+[dependencies]
