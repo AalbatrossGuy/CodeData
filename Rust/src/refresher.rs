@@ -12,6 +12,39 @@ struct Deck {
     cards: Vec<String>,
 }
 
+// Inherent Implementation
+// Inherent Implementation should have the same name as the struct. It's a fancy term for "add a
+// function to a struct". It is used to define methods & associated functions.
+// associated functions == class methods (bruh :/ )
+// In the below example, new() doesn't have &self as it's first parameter, hence, it's not a
+// method. It's an associated function. In rust, functions that have &self as their first parameter
+// are called methods. The ones that do not, are called associated function.
+// An associated function is defined when the functionality is not tied a specific instance.
+// Something like __self__() in python that defines the parameters global to the class, in this
+// case, impl Deck.
+impl Deck {
+    fn new() -> Self {
+        // Self basically tells to return whatever the impl Deck() returns
+        let suits = vec!["Hearts", "spades", "Diamonds"];
+        let values = vec!["Ace", "Two", "Three"];
+
+        let mut cards = Vec::new();
+        for suit in &suits {
+            for value in &values {
+                let card = format!("{value} of {suit}");
+                cards.push(card);
+            }
+        }
+        // If you println!(Deck), it'll give something similar to __repr__ in python's class.
+        // If you do Deck.cards, it'll return the value.
+        let deck = Deck { cards };
+        return deck;
+    }
+    fn print(&self) {
+        return println!("From print fn");
+    }
+}
+
 fn main() {
     // '!' denotes a macro
     // "" defines a string
@@ -27,20 +60,11 @@ fn main() {
     // since no formatted print method is defined in Deck, the attribute gives the formatter a
     // pretty print way to display text
     // Bindings in rust are immutable by default. You've to make them mutable to read/write data.
-    let suits = vec!["Hearts", "spades", "Diamonds"];
-    let values = vec!["Ace", "Two", "Three"];
+
+    let deck = Deck::new();
     let example_array = [1, 2, 3, 4, 5];
-    let mut cards = Vec::new();
-    for suit in &suits {
-        for value in &values {
-            let card = format!("{value} of {suit}");
-            cards.push(card);
-        }
-    }
-    // If you println!(Deck), it'll give something similar to __repr__ in python's class.
-    // If you do Deck.cards, it'll return the value.
-    let deck = Deck { cards };
     println!("Deck: {:#?}", deck.cards);
     println!("Hello World");
     println!("{:?}", example_array);
+    println!("{:?}", deck.print());
 }
