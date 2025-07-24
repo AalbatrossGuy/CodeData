@@ -4,8 +4,8 @@ version="0.0.1"
 edition="2024"
 
 [[bin]]
-name="refresher"
-path="src/refresher.rs"
+name="refresher_2"
+path="src/refresher_2.rs"
 
 [dependencies]
 rand = "0.9.2"
