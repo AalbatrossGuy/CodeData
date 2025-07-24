@@ -3,6 +3,23 @@
 // "derive" is called the derive attribute. It specifies which 'trait' to automatically implement
 // for this struct.
 // "Debug" is called the "Debug trait". It sets a group of functions for the struct.
+// A package in rust is known as crates.
+// Every crate in rust has a root module that consists of functions, structs, etc. Root modules MAY
+// have additional submodules. Each submodule can further have more functions, structs, etc.
+// In order to use a function,struct, etc. in a crate, use the syntax = crate_name::root_module();
+// In order to use a function, struct, etc. in a submodule in a crate, use the syntax =
+// crate_name::sub_module::method();
+// When using custom modules in the project, the module needs to be imported at the top with the
+// syntax "mod <module_name>;" unlike simply calling external crates.
+// When using external crates and accessing them, instead of repeatedly calling the whole root +
+// submodule + method, use the sytax "use crate_name::root_module_function;" or "use
+// crate_name::submodule::function();" at the top of the file to just call "root_module_function()"
+// or "function()" while writing the code. Similar to "from <package> import <method>" in python.
+// If importing multiple methods from the same external crate, use the syntax "use
+// crate_name::{root_module_function, submodule::function};".
+
+use rand::{rng, seq::SliceRandom};
+
 #[derive(Debug)]
 struct Deck {
     // names of struct always starts with capital letter.
@@ -37,11 +54,30 @@ impl Deck {
         }
         // If you println!(Deck), it'll give something similar to __repr__ in python's class.
         // If you do Deck.cards, it'll return the value.
-        let deck = Deck { cards };
-        return deck;
+        Deck { cards: cards } // Example of implicit return. Rust will return the last executed
+                              // expression as long as it doesn't have a semi colon at the end of
+                              // it.
+                              // return num%2 == 0; is the same as num%2==0
     }
-    fn print(&self) {
-        return println!("From print fn");
+    fn shuffle(&mut self) {
+        // &mut self basically means the instance that self gets, can be
+        // mutable, i.e, the data inside deck binding, can and would change.
+        let mut rng = rng();
+        self.cards.shuffle(&mut rng);
+    }
+    fn deal(&mut self, num_cards: usize) -> Vec<String> {
+        // usize data type is used to denote a size or capacity or
+        // index into a vector to pull out some particular
+        // element. Something like a vector's "limits".
+        // This function uses type annotation to tell rust what type of data type is to be
+        // returned.
+        self.cards.split_off(self.cards.len() - num_cards)
+        // the split_off(index) function breaks a vector starting from "index" and returns the new
+        // splitted vector. The old vector consists of everything before "index".
+        // self.cards.len() gives the total length of the Vec<String> array and subtracts num_cards from it.
+        // This gives the position from where the Vec<String> would be splitted. If the array has 0 1 2 3 4 5
+        // elements and the last two are desired, we subtract, 6 - 2, which will give the position 4. Since split_off splits
+        // from "index" till the end, it'll return a new Vec<String> consisting of elements 4 and 5.
     }
 }
 
@@ -61,10 +97,14 @@ fn main() {
     // pretty print way to display text
     // Bindings in rust are immutable by default. You've to make them mutable to read/write data.
 
-    let deck = Deck::new();
+    let mut deck = Deck::new();
     let example_array = [1, 2, 3, 4, 5];
+
+    let cards = deck.deal(3);
+
     println!("Deck: {:#?}", deck.cards);
+    println!("Hand: {:#?}", cards);
+    deck.shuffle();
     println!("Hello World");
     println!("{:?}", example_array);
-    println!("{:?}", deck.print());
 }
