@@ -33,9 +33,19 @@ fn print_acc(account: Account) {
 }
 
 fn main() {
-    let bank = Bank::new();
-    let myaccount = Account::new(253, String::from("Mooda"));
+    // The goal of ownership is to limit the ways data can be referenced and changed. This
+    // limitation reduces the number of bugs and increases legibility of code.
+    // Rust avoids "unexpected updates" and expects programmers to do so too.
+    // Every value is "owned" by a single variable at a time. Reassigning the value to another
+    // variable moves the value. The old variable can't be used to access the value anymore.
 
-    println!("{:#?}", bank);
-    print_acc(myaccount);
+    // At first, the bank object that gets created by "Bank::new()" is owned by "bank". When we put
+    // bank inside "steal_bank", the bank object is now owned by steal_bank and bank has no
+    // ownership of it anymore. Essentially, the bank binding is now empty and hence printing bank
+    // will return an error as it contains nothing.
+    let bank = Bank::new();
+    let steal_bank = bank;
+    // let myaccount = Account::new(253, String::from("Mooda"));
+    // println!("{:#?}", bank);
+    // print_acc(myaccount);
 }
