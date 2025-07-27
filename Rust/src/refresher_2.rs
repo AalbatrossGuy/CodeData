@@ -32,6 +32,15 @@ fn print_acc(account: Account) {
     println!("{:#?}", account);
 }
 
+// Example of a mutable reference
+// A mutable reference can only be made if there are no read-only references currently in use. One
+// mutable reference to a value can exist at a time.
+// A value cannot be changed through the owner when any reference (mutable or immutable) to the
+// value exists.
+fn change_acc(account: &mut Account) {
+    account.balance = 10;
+}
+
 fn main() {
     // The goal of ownership is to limit the ways data can be referenced and changed. This
     // limitation reduces the number of bugs and increases legibility of code.
@@ -55,11 +64,20 @@ fn main() {
     // & operator used on a value means "create a reference to the value its used on".
     let bank_reference = &bank;
     // let steal_bank = bank;
-    // let myaccount = Account::new(253, String::from("Mooda"));
-    println!("{:#?}", bank_reference);
-    println!("{:#?}", &bank); // Directly passing value as a reference to a value.
+    let mut myaccount = Account::new(253, String::from("Mooda"));
+    change_acc(&mut myaccount);
+    // println!("{:#?}", bank_reference);
+    // println!("{:#?}", &bank);
     println!("{:#?}", bank);
     // println!("{:#?}", bank.accounts);
-    // print_acc(myaccount);
-    // print_acc(myaccount);
+    // println!("{:#?}", myaccount.balance);
+    print_acc(myaccount);
+
+    // In Rust, some types of values are "copied" instead of "moved" like numbers, bools, chars,
+    // arrays/tuples with copyable elements, etc. Hence, the concept of borrowing is not needed
+    // here.
+    let num: u32 = 69;
+    let get_num = num;
+    println!("{}, {}", num, get_num); // Is completely valid since the data is getting copied instead of moved
+                                      // into get_num.
 }
