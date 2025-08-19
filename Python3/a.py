@@ -29,8 +29,24 @@
 #     cur.close()
 #     conn.close()
 
-a = [1, 2, 3]
-try:
-    print(a[4])
-except Exception as err:
-    print("Custom Index Error Message: ", err)
+import os
+from flask import Flask, send_from_directory
+
+app = Flask(__name__)
+
+# Folder where test files live
+TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "test_files")
+os.makedirs(TEST_FILES_DIR, exist_ok=True)
+
+
+@app.route("/files/<path:filename>")
+def serve_file(filename):
+    """
+    Example: http://127.0.0.1:5000/files/sample.txt
+    """
+    return send_from_directory(TEST_FILES_DIR, filename, as_attachment=True)
+
+
+if __name__ == "__main__":
+    # Put a file into test_files/sample.txt first
+    app.run(host="0.0.0.0", port=5000, debug=True)
