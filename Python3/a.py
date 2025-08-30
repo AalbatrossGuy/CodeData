@@ -29,8 +29,21 @@
 #     cur.close()
 #     conn.close()
 
-a = [1, 2, 3]
-try:
-    print(a[4])
-except Exception as err:
-    print("Custom Index Error Message: ", err)
+# a = [1, 2, 3]
+# try:
+#     print(a[4])
+# except Exception as err:
+#     print("Custom Index Error Message: ", err)
+
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+print(f"Running from iPad terminal wtf = {os.getenv("NUMBER")}")
+
+
+
+
+
+
+
