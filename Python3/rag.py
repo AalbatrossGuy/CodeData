@@ -1,298 +1,373 @@
+# Created by AG on 31-08-2025
+
 import os
+import sys
 import re
-import time
-import json
-import math
-import hashlib
 import click
-import numpy as np
+import numpy
 import psycopg
-from dataclasses import dataclass
-from typing import Iterable, List, Tuple, Optional
+from groq import Groq
 from psycopg.rows import dict_row
+from dataclasses import dataclass
+from typing import List, Tuple, Dict, Iterable, Generator, Optional
 from pgvector.psycopg import register_vector
 from sentence_transformers import SentenceTransformer
 import xml.etree.ElementTree as ET
 
-try:
-    import blingfire as bf
-    BLING = True
-except Exception:
-    BLING = False
-
-from transformers import AutoTokenizer
 
 @dataclass
-class IngestSummary:
-    total_chunks: int = 0
-    mode: str = "one-shot"
-    defer_ivf: bool = False
-    ivf_lists: Optional[int] = None
-    elapsed_sec: float = 0.0
+class Chunk:
+    id: str
+    content: str
+    metadata: Dict[str, int]
 
-def _tic() -> float:
-    return time.perf_counter()
 
-def _toc(t0: float) -> float:
-    return time.perf_counter() - t0
-
-def _yield_content_tags(xml_path: str) -> Iterable[str]:
+def _iter_content_text(xml_path: str) -> Generator[str, None, None]:
+    # Stream parse; clear elements to keep memory flat
     for _, elem in ET.iterparse(xml_path, events=("end",)):
         if elem.tag.rsplit('}', 1)[-1].lower() == "content":
             parts = []
             for t in elem.itertext():
-                if t and t.strip():
-                    parts.append(t.strip())
+                if t and (s := t.strip()):
+                    parts.append(s)
             if parts:
                 yield " ".join(parts)
         elem.clear()
 
-def extract_text_from_xml(xml_path: str) -> str:
-    blocks = list(_yield_content_tags(xml_path))
-    return "\n\n".join(blocks)
 
-def extract_text_from_path(path: str) -> str:
-    if path.lower().endswith(".xml"):
-        return extract_text_from_xml(path)
-    raise ValueError(f"Unsupported file type for ingestion (expected .xml): {path}")
+def _normalize(s: str) -> str:
+    # Fast whitespace compaction; avoids huge regex over mega-strings
+    return re.sub(r"\s+", " ", s).strip()
 
-class Chunker:
-    def __init__(self):
-        self.tokenizer_name = os.environ.get("TOKENIZER", "sentence-transformers/all-MiniLM-L6-v2")
-        try:
-            self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_name, use_fast=True)
-        except Exception:
-            self.tokenizer = None
-        self.max_tokens = int(os.environ.get("CHUNK_MAX_TOKENS", "320"))
-        self.min_tokens = int(os.environ.get("CHUNK_MIN_TOKENS", "60"))
-        self.overlap = int(os.environ.get("CHUNK_OVERLAP_TOKENS", "40"))
 
-    def _sentences(self, text: str) -> List[str]:
-        if BLING:
-            return [s for s in bf.text_to_sentences(text).split("\n") if s.strip()]
-        return [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if s.strip()]
+def iter_chunks_from_xml(
+    xml_file_path: str,
+    max_characters: int = 500,
+    intersections: int = 100
+) -> Generator[Chunk, None, None]:
+    block_idx = 0
+    for raw in _iter_content_text(xml_file_path):
+        text = _normalize(raw)
+        if not text:
+            block_idx += 1
+            continue
+        n = len(text)
+        if max_characters <= 0:
+            max_characters = 500
+        if intersections < 0 or intersections >= max_characters:
+            intersections = max(0, max_characters // 5)
+        step = max_characters - intersections if max_characters > intersections else max_characters
 
-    def _tok_len(self, text: str) -> int:
-        if self.tokenizer:
-            return len(self.tokenizer.encode(text, add_special_tokens=False))
-        return max(1, len(text.split()))
-
-    def chunk(self, text: str) -> List[str]:
-        sents = self._sentences(text)
-        chunks, buf, tlen = [], [], 0
-        for s in sents:
-            slen = self._tok_len(s)
-            if tlen + slen <= self.max_tokens:
-                buf.append(s); tlen += slen
-            else:
-                if buf:
-                    chunks.append(" ".join(buf))
-                if slen > self.max_tokens:
-                    words = s.split()
-                    start = 0
-                    while start < len(words):
-                        end = start + self.max_tokens
-                        piece = " ".join(words[start:end])
-                        chunks.append(piece)
-                        if end - start >= self.overlap:
-                            start = end - self.overlap
-                        else:
-                            start = end
-                    buf, tlen = [], 0
-                else:
-                    if self.overlap and buf:
-                        keep = []
-                        tk = 0
-                        for sent in reversed(buf):
-                            l = self._tok_len(sent)
-                            if tk + l <= self.overlap:
-                                keep.insert(0, sent); tk += l
-                            else:
-                                break
-                        buf = keep + [s]
-                        tlen = sum(self._tok_len(x) for x in buf)
-                    else:
-                        buf, tlen = [s], slen
-        if buf:
-            chunks.append(" ".join(buf))
-        chunks = [c for c in chunks if self._tok_len(c) >= self.min_tokens or len(chunks) == 1]
-        return chunks
-
-def load_embed_model() -> SentenceTransformer:
-    name = os.environ.get("EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
-    return SentenceTransformer(name, device=os.environ.get("EMBED_DEVICE", "cpu"))
-
-def db_connect(url: str):
-    conn = psycopg.connect(url, row_factory=dict_row)
-    register_vector(conn)
-    return conn
-
-def ensure_table(conn, table: str, dim: int):
-    with conn.cursor() as cur:
-        cur.execute(f"""
-        CREATE TABLE IF NOT EXISTS {table} (
-            doc_id TEXT NOT NULL,
-            chunk_id TEXT PRIMARY KEY,
-            position INTEGER NOT NULL,
-            content TEXT NOT NULL,
-            text_embedding vector({dim}) NOT NULL,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        );
-        """)
-        cur.execute(f"CREATE INDEX IF NOT EXISTS {table}_doc_pos_idx ON {table} (doc_id, position);")
-        conn.commit()
-
-def ensure_ivf_index(conn, table: str, lists: int):
-    with conn.cursor() as cur:
-        cur.execute(f"""
-        DO $$
-        BEGIN
-            IF NOT EXISTS (
-                SELECT 1 FROM pg_class c
-                JOIN pg_namespace n ON n.oid = c.relnamespace
-                WHERE c.relname = '{table}_embedding_idx'
-            ) THEN
-                CREATE INDEX {table}_embedding_idx
-                ON {table}
-                USING ivfflat (text_embedding vector_cosine_ops)
-                WITH (lists = {int(lists)});
-            END IF;
-        END$$;
-        """)
-        conn.commit()
-
-def drop_ivf_index(conn, table: str):
-    with conn.cursor() as cur:
-        cur.execute(f"DROP INDEX IF EXISTS {table}_embedding_idx;")
-        conn.commit()
-
-def vacuum_analyze(conn, table: str):
-    with conn.cursor() as cur:
-        cur.execute(f"VACUUM (VERBOSE, ANALYZE) {table};")
-        conn.commit()
-
-def analyze_only(conn, table: str):
-    with conn.cursor() as cur:
-        cur.execute(f"ANALYZE {table};")
-        conn.commit()
-
-def embed_texts(model: SentenceTransformer, texts: List[str]) -> np.ndarray:
-    return model.encode(texts, normalize_embeddings=True, batch_size=int(os.environ.get("EMBED_BATCH", "64")), show_progress_bar=False)
-
-def _mk_chunk_id(doc_id: str, position: int, content: str) -> str:
-    h = hashlib.md5(f"{doc_id}|{position}|{content[:64]}".encode("utf-8")).hexdigest()
-    return f"{doc_id}-O{position:05d}-{h[:8]}"
-
-def upsert_chunks(conn, table: str, doc_id: str, chunks: List[str], embeds: np.ndarray, batch: int = 2000):
-    rows: List[Tuple[str, str, int, str, list]] = []
-    for i, (c, e) in enumerate(zip(chunks, embeds)):
-        cid = _mk_chunk_id(doc_id, i, c)
-        rows.append((doc_id, cid, i, c, e.tolist()))
-    with conn.cursor() as cur:
-        for i in range(0, len(rows), batch):
-            part = rows[i:i+batch]
-            cur.execute(f"BEGIN;")
-            cur.executemany(
-                f"""
-                INSERT INTO {table} (doc_id, chunk_id, position, content, text_embedding)
-                VALUES (%s, %s, %s, %s, %s)
-                ON CONFLICT (chunk_id)
-                DO UPDATE SET
-                    content = EXCLUDED.content,
-                    text_embedding = EXCLUDED.text_embedding,
-                    updated_at = NOW();
-                """,
-                part
+        idx = 0
+        while idx < n:
+            end = idx + max_characters
+            slice_ = text[idx:end]
+            cid = f"C{block_idx:06d}-O{idx:08d}"
+            yield Chunk(
+                id=cid,
+                content=slice_.strip(),
+                metadata={"page": block_idx, "character_offset": idx}
             )
-            cur.execute("COMMIT;")
+            if end >= n:
+                break
+            idx += step
+        block_idx += 1
 
-def ingest_file(file_path: str, conn, table: str, model: SentenceTransformer, chunker: Chunker, rolling: bool = False, upsert_batch: int = 2000) -> IngestSummary:
-    t0 = _tic()
-    raw_text = extract_text_from_path(file_path)
-    if not raw_text.strip():
-        return IngestSummary(total_chunks=0, mode="rolling" if rolling else "one-shot", elapsed_sec=_toc(t0))
-    chunks = chunker.chunk(raw_text)
-    embeds = embed_texts(model, chunks)
-    doc_id = os.path.splitext(os.path.basename(file_path))[0]
-    upsert_chunks(conn, table, doc_id, chunks, embeds, batch=upsert_batch)
-    return IngestSummary(total_chunks=len(chunks), mode="rolling" if rolling else "one-shot", elapsed_sec=_toc(t0))
 
-def ingest_path(input_path: str, conn, table: str, model: SentenceTransformer, chunker: Chunker, rolling: bool = False, upsert_batch: int = 2000) -> List[IngestSummary]:
-    summaries = []
-    if os.path.isdir(input_path):
-        for root, _, files in os.walk(input_path):
-            for name in files:
-                if name.lower().endswith(".xml"):
-                    summaries.append(ingest_file(os.path.join(root, name), conn, table, model, chunker, rolling=rolling, upsert_batch=upsert_batch))
-    else:
-        summaries.append(ingest_file(input_path, conn, table, model, chunker, rolling=rolling, upsert_batch=upsert_batch))
-    return summaries
+class VectorDBStore:
+    def __init__(self, url: str, table: str = "chunks", text_dim: int = 384):
+        self.url = url
+        self.table = table
+        self.dim = text_dim
+        self._verify_schema()
 
-@click.group()
-def cli():
-    pass
+    def _verify_schema(self):
+        with psycopg.connect(self.url, autocommit=True) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+                cursor.execute(
+                    f"""
+                    CREATE TABLE IF NOT EXISTS {self.table} (
+                        chunk_id TEXT PRIMARY KEY,
+                        page INTEGER NOT NULL,
+                        character_offset INTEGER NOT NULL,
+                        content TEXT NOT NULL,
+                        text_embedding VECTOR({self.dim}) NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    f"""
+                    DO $$
+                    BEGIN
+                        IF NOT EXISTS(
+                            SELECT 1 FROM pg_class info
+                            JOIN pg_namespace name on name.oid = info.relnamespace
+                            WHERE info.relname = '{self.table}_embedding_index'
+                        ) THEN
+                            CREATE INDEX {self.table}_embedding_index
+                            ON {self.table}
+                            USING ivfflat (text_embedding vector_cosine_ops)
+                            WITH (lists = 100);
+                        END IF;
+                    END$$;
+                    """
+                )
 
-@cli.command("ingest")
-@click.argument("input_path", type=click.Path(exists=True, dir_okay=True, file_okay=True))
-@click.option("--db-url", envvar="DATABASE_URL", required=True)
-@click.option("--table", envvar="PGVECTOR_TABLE", default="rag_chunks", show_default=True)
-@click.option("--upsert-batch", default=2000, show_default=True, type=int)
-@click.option("--rolling", is_flag=True, default=False, show_default=True)
-@click.option("--defer-ivf", is_flag=True, default=False, show_default=True)
-@click.option("--ivf-lists", default=100, show_default=True, type=int)
-@click.option("--auto-vacuum", is_flag=True, default=True, show_default=True)
-@click.option("--analyze", is_flag=True, default=False, show_default=True)
-def ingest_cmd(input_path, db_url, table, upsert_batch, rolling, defer_ivf, ivf_lists, auto_vacuum, analyze):
-    model = load_embed_model()
-    dim = model.get_sentence_embedding_dimension()
-    conn = db_connect(db_url)
-    ensure_table(conn, table, dim)
-    if defer_ivf:
-        drop_ivf_index(conn, table)
-    chunker = Chunker()
-    summaries = ingest_path(input_path, conn, table, model, chunker, rolling=rolling, upsert_batch=upsert_batch)
-    total = sum(s.total_chunks for s in summaries)
-    if not defer_ivf:
-        ensure_ivf_index(conn, table, ivf_lists)
-    else:
-        ensure_ivf_index(conn, table, ivf_lists)
-    if auto_vacuum:
-        vacuum_analyze(conn, table)
-    elif analyze:
-        analyze_only(conn, table)
-    out = {
-        "files": len(summaries),
-        "total_chunks": total,
-        "elapsed_sec": round(sum(s.elapsed_sec for s in summaries), 3),
-        "ivf_lists": ivf_lists,
-        "vacuum_run": auto_vacuum,
-        "rolling": rolling
-    }
-    print(json.dumps(out, ensure_ascii=False, indent=2))
+    def upsert_batch(self, batch_rows: List[Tuple[str, int, int, str, list]]) -> None:
+        if not batch_rows:
+            return
+        with psycopg.connect(self.url) as connection:
+            with connection.cursor() as cursor:
+                cursor.executemany(
+                    f"""
+                    INSERT INTO {self.table}
+                        (chunk_id, page, character_offset, content, text_embedding)
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT (chunk_id) DO UPDATE SET
+                        page = EXCLUDED.page,
+                        character_offset = EXCLUDED.character_offset,
+                        content = EXCLUDED.content,
+                        text_embedding = EXCLUDED.text_embedding;
+                    """,
+                    batch_rows
+                )
+            connection.commit()
 
-@cli.command("query")
-@click.option("--db-url", envvar="DATABASE_URL", required=True)
-@click.option("--table", envvar="PGVECTOR_TABLE", default="rag_chunks", show_default=True)
-@click.option("--top-k", default=5, show_default=True, type=int)
-@click.option("--query-text", required=True)
-def query_cmd(db_url, table, top_k, query_text):
-    model = load_embed_model()
-    q = model.encode([query_text], normalize_embeddings=True)[0].tolist()
-    conn = db_connect(db_url)
-    with conn.cursor() as cur:
-        cur.execute(
-            f"""
-            SELECT chunk_id, doc_id, position, content,
-                   (text_embedding <=> %s) AS cosine_distance
-            FROM {table}
-            ORDER BY text_embedding <=> %s
-            LIMIT %s;
-            """,
-            (q, q, top_k)
+    def search(
+        self,
+        embedded_query: numpy.ndarray,
+        top_k: int = 6
+    ) -> List[Tuple[Chunk, float]]:
+        query_vector = embedded_query.tolist()
+        with psycopg.connect(self.url, row_factory=dict_row) as connection:
+            register_vector(connection)
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    SELECT chunk_id, page, character_offset, content,
+                        (text_embedding <=> %s::vector) AS cosine_distance
+                    FROM {self.table}
+                    ORDER BY text_embedding <=> %s::vector
+                    LIMIT %s;
+                    """,
+                    (query_vector, query_vector, top_k)
+                )
+                rows = cursor.fetchall()
+        out: List[Tuple[Chunk, float]] = []
+        for r in rows:
+            c = Chunk(
+                id=r["chunk_id"],
+                content=r["content"],
+                metadata={"page": r["page"], "character_offset": r["character_offset"]}
+            )
+            sim = float(1.0 - r["cosine_distance"])
+            out.append((c, sim))
+        return out
+
+
+class Embed:
+    def __init__(self, model: str = "sentence-transformers/all-MiniLM-L6-v2"):
+        self.model = SentenceTransformer(model)
+        v = self.model.encode(["validate"], normalize_embeddings=True)
+        self.dim = int(v.shape[1])
+
+    def encode_embed(self, texts: List[str], batch_size: int = 64) -> numpy.ndarray:
+        arr = self.model.encode(
+            texts,
+            batch_size=batch_size,
+            normalize_embeddings=True,
+            show_progress_bar=False
         )
-        rows = cur.fetchall()
-    print(json.dumps(rows, ensure_ascii=False, indent=2))
+        return numpy.asarray(arr, dtype=numpy.float32)
+
+
+class RAGRetrieverModel:
+    def __init__(self, vectorStore: VectorDBStore, embedder: Embed):
+        self.vectorStore = vectorStore
+        self.embedder = embedder
+
+    def search(self, query: str, top_k: int = 6) -> List[Tuple[Chunk, float]]:
+        q = self.embedder.encode_embed([query])[0]
+        return self.vectorStore.search(embedded_query=q, top_k=top_k)
+
+
+def create_retrieve_context(ChunkBlock: List[Tuple[Chunk, float]], max_characters=1000) -> str:
+    buf, used, total = [], set(), 0
+    for ch, _ in ChunkBlock:
+        if ch.id in used:
+            continue
+        line = f"[Chunk_id: {ch.id} page: {ch.metadata.get('page')}] {{\n{ch.content.strip()}\n}}\n"
+        if total + len(line) > max_characters:
+            break
+        buf.append(line)
+        used.add(ch.id)
+        total += len(line)
+    return "".join(buf)
+
+
+def answer_pass_threshold(ChunkBlocks, min_similarity=0.14, min_support=1, support_similarity=0.06) -> bool:
+    if not ChunkBlocks:
+        return False
+    top_similarity = ChunkBlocks[0][1]
+    if top_similarity >= 0.40:
+        return True
+    if top_similarity < min_similarity:
+        return False
+    supporter = sum(1 for _, s in ChunkBlocks if s >= support_similarity)
+    return supporter >= min_support
+
+
+fallback = "Don't know the answer"
+
+PROMPT = """You are a strict RAG assistant.
+RULES:
+- Answer ONLY using the provided CONTEXT.
+- If the answer is not fully contained in CONTEXT, reply exactly:
+  "I don't know from the answer."
+- Keep answers concise and cite chunk IDs like [Chunk_id: id] inline for claims
+"""
+
+CONTEXT_WITH_QUESTION = """QUESTION:
+{question}
+
+CONTEXT (verbatim excerpts):
+{context}
+"""
+
+
+def groq() -> Groq:
+    key = os.getenv("GROQ_API_KEY")
+    return Groq(api_key=key)
+
+
+def chat(client: Groq, user_prompt: str, model="qwen/qwen3-32b") -> str:
+    resp = client.chat.completions.create(
+        model=model,
+        temperature=0.1,
+        messages=[{"role": "system", "content": PROMPT}, {"role": "user", "content": user_prompt}],
+        reasoning_format="hidden"
+    )
+    return resp.choices[0].message.content.strip()
+
+
+def get_response(
+    query: str,
+    retriever: RAGRetrieverModel,
+    client: Groq,
+    min_similarity=0.05,
+    min_support=1,
+    support_similarity=0.02
+) -> str:
+    blocks = retriever.search(query, top_k=6)
+    if not answer_pass_threshold(blocks, min_similarity, min_support, support_similarity):
+        print('could not pass answer_pass_threshold')
+        return fallback
+    context = create_retrieve_context(blocks, max_characters=1000)
+    response = chat(client, CONTEXT_WITH_QUESTION.format(question=query, context=context))
+    if fallback in response:
+        print('fallback encountered')
+        return fallback
+    if "[Chunk_id:" not in response:
+        print('Chunk_id not found in response')
+        return fallback
+    return response
+
+
+def stream_ingest_xml(
+    xml_file_path: str,
+    store: VectorDBStore,
+    embedder: Embed,
+    max_characters: int = 500,
+    intersections: int = 100,
+    upsert_batch_size: int = 1000,
+    embed_batch_size: int = 128
+) -> int:
+    total = 0
+    buffer_chunks: List[Chunk] = []
+    buffer_texts: List[str] = []
+
+    def flush():
+        nonlocal total, buffer_chunks, buffer_texts
+        if not buffer_chunks:
+            return
+        embeds = embedder.encode_embed(buffer_texts, batch_size=embed_batch_size)
+        rows = [
+            (
+                c.id,
+                int(c.metadata.get("page", 0)),
+                int(c.metadata.get("character_offset", 0)),
+                c.content,
+                embeds[i].tolist(),
+            )
+            for i, c in enumerate(buffer_chunks)
+        ]
+        store.upsert_batch(rows)
+        total += len(buffer_chunks)
+        buffer_chunks = []
+        buffer_texts = []
+
+    for chunk in iter_chunks_from_xml(xml_file_path, max_characters=max_characters, intersections=intersections):
+        buffer_chunks.append(chunk)
+        buffer_texts.append(chunk.content)
+        if len(buffer_chunks) >= upsert_batch_size:
+            flush()
+    flush()
+    return total
+
+
+@click.command()
+@click.argument("xml_file_path", type=click.Path(exists=True, dir_okay=False))
+@click.argument("question", type=str)
+@click.option("--database-url", default="postgres://aalbatrossguy:pgadmin%40123@localhost:5432/vector_db")
+@click.option("--max-characters", default=500, help="Chunk window size.")
+@click.option("--intersection", default=100, help="Token/char overlap per window.")
+@click.option("--min-similarity", default=0.14)
+@click.option("--support-similarity", default=0.06)
+@click.option("--min-support", default=2)
+@click.option("--skip-indexing", is_flag=True, default=False)
+@click.option("--upsert-batch-size", default=1000, help="DB upsert batch size.")
+@click.option("--embed-batch-size", default=128, help="Model encode() batch size.")
+def script(
+    xml_file_path,
+    question,
+    database_url,
+    max_characters,
+    intersection,
+    min_similarity,
+    support_similarity,
+    min_support,
+    skip_indexing,
+    upsert_batch_size,
+    embed_batch_size,
+):
+    embedder = Embed()
+    store = VectorDBStore(url=database_url, text_dim=embedder.dim)
+
+    if not skip_indexing:
+        total = stream_ingest_xml(
+            xml_file_path=xml_file_path,
+            store=store,
+            embedder=embedder,
+            max_characters=max_characters,
+            intersections=intersection,
+            upsert_batch_size=upsert_batch_size,
+            embed_batch_size=embed_batch_size
+        )
+        click.echo(f"Ingested chunks: {total}")
+
+    retriever = RAGRetrieverModel(vectorStore=store, embedder=embedder)
+    client = groq()
+    response = get_response(
+        query=question,
+        retriever=retriever,
+        client=client,
+        min_similarity=min_similarity,
+        min_support=min_support,
+        support_similarity=support_similarity
+    )
+    click.echo(response)
+
 
 if __name__ == "__main__":
-    cli()
+    script()
