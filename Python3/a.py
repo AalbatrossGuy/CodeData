@@ -29,6 +29,7 @@
 #     cur.close()
 #     conn.close()
 
+<<<<<<< HEAD
 import os
 from flask import Flask, send_from_directory
 
@@ -50,3 +51,23 @@ def serve_file(filename):
 if __name__ == "__main__":
     # Put a file into test_files/sample.txt first
     app.run(host="0.0.0.0", port=5000, debug=True)
+=======
+# a = [1, 2, 3]
+# try:
+#     print(a[4])
+# except Exception as err:
+#     print("Custom Index Error Message: ", err)
+
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+print(f"Running from iPad terminal wtf = {os.getenv("NUMBER")}")
+
+
+
+
+
+
+
+>>>>>>> 1ec336bd169a5306b134a161e4efd122889ad633
